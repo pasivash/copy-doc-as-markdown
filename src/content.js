@@ -60,15 +60,8 @@ if (!globalThis.__gdmdLoaded) {
     area.select();
   }
 
+  // The export redirects to another Google host, so it's fetched by the service worker.
   async function fetchDocxBytes(url) {
-    try {
-      const res = await fetch(url, { credentials: "include", redirect: "follow" });
-      if (res.ok) {
-        const buffer = await res.arrayBuffer();
-        const bytes = new Uint8Array(buffer);
-        if (bytes[0] === 0x50 && bytes[1] === 0x4b) return buffer;
-      }
-    } catch { /* the download is served from another Google host */ }
     const file = await chrome.runtime.sendMessage({ type: "fetch-docx", url });
     if (!file?.ok || !file.base64) throw new Error(file?.error || "Export failed");
     return decodeBase64(file.base64);
@@ -76,8 +69,10 @@ if (!globalThis.__gdmdLoaded) {
 
   function friendlyError(error) {
     const message = error?.message || "Couldn't export this doc";
-    return /Not a Word document|Export failed|Failed to fetch/.test(message)
-      ? "Couldn't export this doc. Sign in if it is private, then try again."
+    console.warn("[Copy Doc as Markdown]", error);
+    if (/HTTP 429/.test(message)) return "Google is throttling exports. Wait a few seconds and try again.";
+    return /Export failed|Not a Word document/.test(message)
+      ? "Couldn't export this doc " + (message.match(/\(.*\)/)?.[0] || "") + ". Try again in a moment."
       : message;
   }
 
