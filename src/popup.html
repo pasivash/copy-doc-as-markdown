@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="icons/icon32.png" alt="" width="20" height="20">
+    <h1>Copy Doc as Markdown</h1>
+  </header>
+
+  <div class="actions">
+    <button type="button" data-action="copy" class="primary">Copy markdown</button>
+    <button type="button" data-action="download">Download .md</button>
+  </div>
+  <p id="status" role="status"></p>
+
+  <form id="settings">
+    <fieldset>
+      <legend>Include</legend>
+      <label><input type="radio" name="content" value="all"> Document and comments</label>
+      <label><input type="radio" name="content" value="doc"> Document only</label>
+      <label><input type="radio" name="content" value="comments"> Comments only</label>
+    </fieldset>
+    <fieldset class="comments">
+      <legend>Comments</legend>
+      <label><input type="checkbox" name="resolved"> Resolved threads</label>
+      <label><input type="checkbox" name="suggestions"> Suggestions</label>
+    </fieldset>
+    <fieldset>
+      <legend>Other</legend>
+      <label><input type="checkbox" name="header"> Title, link and comment summary</label>
+      <label><input type="checkbox" name="button"> Show buttons on the page</label>
+    </fieldset>
+  </form>
+
+  <footer>
+    Shortcuts: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> copy, <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> download
+  </footer>
+
+  <script src="shared.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

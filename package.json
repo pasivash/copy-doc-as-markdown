@@ -1,0 +1,12 @@
+{
+  "name": "copy-doc-as-markdown",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/",
+    "build": "rm -rf dist && mkdir dist && cd src && zip -qrX ../dist/copy-doc-as-markdown.zip . -x '.*'"
+  },
+  "devDependencies": {
+    "@xmldom/xmldom": "^0.9.8"
+  }
+}

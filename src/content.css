@@ -1,0 +1,72 @@
+#gdmd-bar {
+  position: fixed;
+  z-index: 2147483646;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+}
+
+#gdmd-bar button {
+  border: 0;
+  padding: 8px 12px;
+  font: 600 13px/1.2 Arial, sans-serif;
+  color: #fff;
+  background: #1a73e8;
+  cursor: pointer;
+}
+
+#gdmd-bar button + button { border-left: 1px solid rgba(255, 255, 255, 0.35); }
+#gdmd-bar button:hover { background: #185abc; }
+#gdmd-bar button:disabled { opacity: 0.7; cursor: progress; }
+
+#gdmd-toast {
+  position: fixed;
+  z-index: 2147483646;
+  right: 16px;
+  bottom: 54px;
+  max-width: 280px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #202124;
+  color: #fff;
+  font: 12px/1.4 Arial, sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+}
+
+#gdmd-toast.error { background: #b3261e; }
+
+#gdmd-manual {
+  position: fixed;
+  z-index: 2147483646;
+  right: 16px;
+  bottom: 54px;
+  width: min(420px, calc(100vw - 32px));
+  padding: 8px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  font: 12px/1.4 Arial, sans-serif;
+}
+
+#gdmd-manual div { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 6px; }
+#gdmd-manual button {
+  border: 0;
+  border-radius: 6px;
+  padding: 4px 8px;
+  background: #1a73e8;
+  color: #fff;
+  cursor: pointer;
+}
+#gdmd-manual textarea {
+  width: 100%;
+  height: 180px;
+  box-sizing: border-box;
+  font: 12px/1.4 ui-monospace, monospace;
+}
+
+@media print {
+  #gdmd-bar, #gdmd-toast, #gdmd-manual { display: none !important; }
+}
