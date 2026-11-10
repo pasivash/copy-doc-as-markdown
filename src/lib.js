@@ -215,9 +215,20 @@
         if (ctx.mode === "md" && ctx.markers[id]) tokens.push({ raw: ctx.markers[id] });
       } else if (name === "drawing" || name === "pict" || name === "object") {
         if (ctx.mode === "md") tokens.push({ raw: " [image] " });
-      } else if (name === "del") {
+      } else if (name === "ins" || name === "del") {
+        // Suggested edits: the body keeps the original text; the edit becomes a suggestion thread.
+        const index = ctx.edit++;
+        const start = ctx.offset;
         const inner = renderInline(child, ctx);
-        if (ctx.mode === "md" && inner.trim()) tokens.push({ raw: "~~" + inner + "~~" });
+        if (ctx.mode === "quote") {
+          ctx.edits.push({
+            kind: name, author: attr(child, "author") || "Unknown", iso: attr(child, "date"),
+            text: clean(child.textContent), start, end: ctx.offset,
+          });
+        } else {
+          if (name === "del" && inner) tokens.push({ raw: inner });
+          if (ctx.markers["e" + index]) tokens.push({ raw: ctx.markers["e" + index] });
+        }
       } else {
         const inner = renderInline(child, ctx);
         if (ctx.mode === "md" && inner) tokens.push({ raw: inner });
@@ -319,7 +330,33 @@
   }
 
   function emptyCtx() {
-    return { mode: "md", active: new Set(), quotes: {}, ranges: {}, markers: {}, rels: {}, offset: 0 };
+    return { mode: "md", active: new Set(), quotes: {}, ranges: {}, markers: {}, rels: {}, offset: 0, edit: 0 };
+  }
+
+  // Adjacent edits by the same author form one suggestion, e.g. delete "Team" + insert "Business".
+  function suggestionThreads(edits) {
+    const groups = [];
+    edits.forEach((edit, index) => {
+      const last = groups[groups.length - 1];
+      if (last && last.author === edit.author && last.end === edit.start) {
+        last.edits.push(edit);
+        last.end = edit.end;
+        last.lastIndex = index;
+      } else {
+        groups.push({ author: edit.author, iso: edit.iso, end: edit.end, edits: [edit], lastIndex: index });
+      }
+    });
+    return groups.map((group) => {
+      const text = (kind) => oneLine(group.edits.filter((edit) => edit.kind === kind).map((edit) => edit.text).join(""));
+      const removed = text("del");
+      const added = text("ins");
+      const body = removed && added ? 'Replace: "' + removed + '" with "' + added + '"'
+        : added ? 'Add: "' + added + '"' : 'Delete: "' + removed + '"';
+      return {
+        kind: "suggestion", status: "open", quote: "", markerId: "e" + group.lastIndex,
+        messages: [{ author: group.author, date: formatDate(group.iso), body }],
+      };
+    });
   }
 
   function groupThreads(comments) {
@@ -408,8 +445,9 @@
       }
     }
     for (let index = 0; index < discussions.length; index++) {
-      if (used.has(index)) continue;
       const discussion = discussions[index];
+      // Pending suggestions come from the .docx tracked changes instead.
+      if (used.has(index) || discussion.kind === "suggestion") continue;
       if (threads.some((thread) => score(thread, discussion) >= 12)) continue;
       const messages = [];
       if (discussion.body || discussion.author) {
@@ -487,6 +525,7 @@
 
     const quoteCtx = {
       mode: "quote", active: new Set(), quotes: {}, ranges: {}, markers: {}, rels, offset: 0, numbering, counters: {},
+      edit: 0, edits: [],
     };
     for (const id of Object.keys(comments)) quoteCtx.ranges[id] = { start: null, end: null };
     renderBlocks(body, quoteCtx);
@@ -499,28 +538,43 @@
 
     const all = groupThreads(comments);
     mergeDiscussions(all, opts.discussions);
-    const threads = opts.content === "doc" ? [] : all.filter((thread) =>
+    all.push(...suggestionThreads(quoteCtx.edits));
+    const kept = opts.content === "doc" ? [] : all.filter((thread) =>
       (opts.resolved !== false || thread.status !== "resolved")
       && (opts.suggestions !== false || thread.kind !== "suggestion"));
-    const markers = {};
-    threads.forEach((thread, index) => {
-      thread.label = "c" + (index + 1);
-      if (thread.markerId) markers[thread.markerId] = " [" + thread.label + "]";
-    });
 
+    // Markers start as placeholders so threads can be numbered in document order.
+    const token = (index) => "\u0000" + index + "\u0000";
+    const markers = {};
+    kept.forEach((thread, index) => {
+      if (thread.markerId) markers[thread.markerId] = token(index);
+    });
+    const mdCtx = {
+      mode: "md", active: new Set(), quotes: {}, ranges: quoteCtx.ranges, markers, rels, offset: 0, numbering, counters: {}, edit: 0,
+    };
+    let bodyMd = renderBlocks(body, mdCtx).replace(/\n{3,}/g, "\n\n").trim();
+    kept.forEach((thread, index) => {
+      // Resolved threads are missing from the export; anchor them by their quoted text.
+      const at = thread.markerId || !thread.quote || thread.quote.includes("\n") ? -1 : bodyMd.indexOf(thread.quote);
+      if (at >= 0) bodyMd = bodyMd.slice(0, at + thread.quote.length) + token(index) + bodyMd.slice(at + thread.quote.length);
+    });
+    const position = (index) => (bodyMd.indexOf(token(index)) + 1) || Infinity;
+    const order = kept.map((_, index) => index).sort((a, b) => position(a) - position(b) || a - b);
+    const threads = order.map((index) => kept[index]);
+    threads.forEach((thread, index) => { thread.label = "c" + (index + 1); });
+    bodyMd = bodyMd.replace(/\u0000(\d+)\u0000/g, (_, index) => " [" + kept[index].label + "]");
+
+    const title = (opts.title || "Untitled document").trim();
     const sections = [];
     if (opts.header !== false) {
-      const head = ["# " + (opts.title || "Untitled document").trim()];
+      const titleLine = "# " + title;
+      if (bodyMd === titleLine || bodyMd.startsWith(titleLine + "\n")) bodyMd = bodyMd.slice(titleLine.length).trim();
+      const head = [titleLine];
       if (opts.url) head.push("", opts.url);
       if (opts.content !== "doc") head.push("", "Comments: " + summary(threads));
       sections.push(head.join("\n"));
     }
-    if (opts.content !== "comments") {
-      const mdCtx = {
-        mode: "md", active: new Set(), quotes: {}, ranges: quoteCtx.ranges, markers, rels, offset: 0, numbering, counters: {},
-      };
-      sections.push(renderBlocks(body, mdCtx).replace(/\n{3,}/g, "\n\n").trim());
-    }
+    if (opts.content !== "comments") sections.push(bodyMd);
     if (threads.length) {
       const heading = opts.content === "comments" ? "## Comments" : "---\n\n## Comments";
       sections.push(heading + "\n\n" + threads.map(renderThread).join("\n\n"));

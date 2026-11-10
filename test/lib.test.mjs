@@ -86,6 +86,28 @@ test("comments only skips the body", async () => {
   assert.match(markdown, /## Comments\n\n### c1 · open\n\nOn: Open part here/);
 });
 
+test("tracked changes become suggestions; live-only threads anchor by quote; title is not duplicated", async () => {
+  const edit = (tag, text) => `<w:${tag} w:author="Sam" w:date="2026-01-05T10:00:00Z"><w:r><w:${tag === "del" ? "delText" : "t"}>${text}</w:${tag === "del" ? "delText" : "t"}></w:r></w:${tag}>`;
+  const file = zip({
+    "word/document.xml": `<w:document ${NS}><w:body>
+      <w:p><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>Plan</w:t></w:r></w:p>
+      <w:p><w:r><w:t>Cut onboarding to five minutes.</w:t></w:r></w:p>
+      <w:p><w:r><w:t>Support SSO for </w:t></w:r>${edit("ins", "Business")}${edit("del", "Team")}<w:r><w:t> plans</w:t></w:r></w:p>
+    </w:body></w:document>`,
+  });
+  const live = [
+    { id: "r", resolved: true, kind: "comment", quote: "Cut onboarding to five minutes.", body: "Baseline is 4m 30s", replies: [{ body: "Done" }] },
+    { id: "s", resolved: false, kind: "suggestion", quote: "", body: "", replies: [] },
+  ];
+  const { markdown, summary } = await docxToMarkdown(file, { title: "Plan", discussions: live });
+  assert.equal(markdown.match(/^# Plan$/gm).length, 1);
+  assert.match(markdown, /Cut onboarding to five minutes\. \[c1\]/);
+  assert.match(markdown, /Support SSO for Team \[c2\] plans/);
+  assert.match(markdown, /### c1 · resolved[\s\S]*> Done/);
+  assert.match(markdown, /### c2 · suggestion · open\n\n\*\*Sam\*\*.*\n\nReplace: "Team" with "Business"/);
+  assert.equal(summary, "1 resolved, 1 suggestion");
+});
+
 test("document only drops comments and header summary", async () => {
   const { markdown } = await convert({ content: "doc", header: false });
   assert.match(markdown, /^# Intro/);

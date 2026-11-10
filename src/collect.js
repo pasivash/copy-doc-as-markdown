@@ -41,7 +41,7 @@ function collectDiscussions() {
   function isNoise(value) {
     const text = value.trim();
     if (!text || text === "text/html") return true;
-    if (/^(kix|suggest)\.[a-z0-9]+$/i.test(text)) return true;
+    if (/^(kix|suggest|doco)\.[\w-]+$/i.test(text)) return true;
     if (/^AA[A-Za-z0-9_-]{6,}$/.test(text)) return true;
     if (/^[a-z0-9]{10,24}$/i.test(text)) return true;
     if (/^https?:\/\//.test(text) || text.startsWith("//")) return true;
@@ -51,7 +51,7 @@ function collectDiscussions() {
   function looksLikeName(value) {
     const text = value.trim();
     if (text.length < 2 || text.length > 80) return false;
-    if (/https?:|\/\/|^kix\.|^suggest\.|^AA[A-Za-z0-9_-]{6,}$/.test(text)) return false;
+    if (/https?:|\/\/|^kix\.|^suggest\.|^doco\.|^AA[A-Za-z0-9_-]{6,}$/.test(text)) return false;
     if (/^\d+$/.test(text) || /^[a-z0-9]{10,}$/i.test(text)) return false;
     return /[A-Za-zÀ-ÿ]/.test(text);
   }
@@ -179,7 +179,7 @@ function collectDiscussions() {
       body: body && body.trim() !== quote.trim() ? body : (rootPost.body || ""),
       author: rootPost.author,
       date: rootPost.date,
-      replies: replies.filter((reply) => reply.body || reply.author),
+      replies: replies.filter((reply) => reply.body),
     };
   }
 
