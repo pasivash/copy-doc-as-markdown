@@ -41,6 +41,6 @@ Copy-paste material for the [developer dashboard](https://chrome.google.com/webs
 
 **Remote code:** No, I am not using remote code.
 
-**Data usage:** Check none of the data types. Certify all three disclosures (no selling, no unrelated use, no creditworthiness use). The extension handles "Website content" only locally and never transmits it; if a reviewer pushes back, tick "Website content" and note it never leaves the device.
+**Data usage:** Tick only "Website content" (document text is read and converted locally, never transmitted). Certify all three disclosures (no selling, no unrelated use, no creditworthiness use).
 
 **Privacy policy URL:** https://github.com/pasivash/copy-doc-as-markdown/blob/main/PRIVACY.md
