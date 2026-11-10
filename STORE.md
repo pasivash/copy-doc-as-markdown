@@ -25,7 +25,7 @@ Copy-paste material for the [developer dashboard](https://chrome.google.com/webs
 >
 > Not affiliated with Google.
 
-**Assets:** 128×128 icon (`src/icons/icon128.png`), at least one 1280×800 screenshot, optional 440×280 small promo tile.
+**Assets** (in `store/`): screenshots `screenshot-1-overview.png`, `screenshot-2-comments.png`, `screenshot-3-settings.png` (1280×800) and small promo tile `promo-small-440x280.png`. Icon: `src/icons/icon128.png`.
 
 ## Privacy practices tab
 
