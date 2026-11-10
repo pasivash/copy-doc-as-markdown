@@ -25,7 +25,7 @@ Copy-paste material for the [developer dashboard](https://chrome.google.com/webs
 >
 > Not affiliated with Google.
 
-**Assets** (in `store/`): screenshots `screenshot-1-overview.png`, `screenshot-2-comments.png`, `screenshot-3-settings.png` (1280×800) and small promo tile `promo-small-440x280.png`. Icon: `src/icons/icon128.png`.
+**Assets** (in `store/`): screenshots `screenshot-1-overview.png`, `screenshot-2-comments.png`, `screenshot-3-settings.png` (1280×800) small promo tile `promo-small-440x280.png` and marquee `promo-marquee-1400x560.png`. Icon: `src/icons/icon128.png`.
 
 ## Privacy practices tab
 
